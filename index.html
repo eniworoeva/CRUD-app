@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Blog</title>
+    <style>
+        body{
+            background-color: green;
+        }
+    </style>
+</head>
+<body>
+<h1>Welcome To My Blog</h1>
+<div>
+    <form action="/post" method="POST">
+        <div>
+            <label>AUTHOR
+                <input type="text" name="author" placeholder="author">
+            </label>
+        </div>
+        <br>
+        <div>
+            <label>TITLE
+                <input type="text" name="title" placeholder="blog title">
+            </label>
+        </div>
+        <br>
+        <div>
+            <label>
+                CONTENT <textarea   name="content" placeholder="Write your blogpost"></textarea>
+            </label>
+        </div>
+        <br>
+        <div>
+            <input type="submit" value="Add Post">
+        </div>
+    </form>
+</div>
+<div>
+    {{range $i,$v:= .}}
+    <div>
+        <h6 style="display: none">{{.Id}}</h6>
+        <h1>{{.Title}}</h1>
+        <p>{{.Author}}</p>
+        <p>{{.Content}}</p>
+        <p>{{.Time}}, {{.Date}}</p>
+        <form action="/delete/{{ .Id }}" method="get">
+            <button type="submit" id="{{.Id}}"> Delete</button>
+        </form>
+        {{end}}
+    </div>
+</div>
+</body>
+</html>
