@@ -47,6 +47,7 @@
         <form action="/delete/{{ .Id }}" method="get">
             <button type="submit" id="{{.Id}}"> Delete</button>
         </form>
+        <button> <a href="/edit/{{ .Id }}" target="">Edit</a></button>
         {{end}}
     </div>
 </div>

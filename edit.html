@@ -19,7 +19,7 @@ text-align: center;
 <div class="wholepage">
 <body>
 <h1>Edit Page</h1>
-<form action="/post" method="POST">
+<form action="/edit/{{ .Id }}" method="POST">
 <div>
 <label>TITLE
 <textarea name="title">{{.Title}}</textarea>

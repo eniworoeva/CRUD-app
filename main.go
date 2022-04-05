@@ -21,6 +21,7 @@ func main() {
 	router.Post("/post", PostBlog)
 	router.Get("/delete/{Id}", DeleteBlog)
 	router.Get("/edit/{Id}", EditBlog)
+	router.Post("/edit/{Id}", PostEdit)
 	fmt.Println("Listening!")
 	log.Fatal(http.ListenAndServe(":2020", router))
 }
@@ -38,23 +39,42 @@ var Blogposts []Blog
 var data Blog
 
 func HomePage(w http.ResponseWriter, request *http.Request) {
-	temp := template.Must(template.ParseFiles("homepage.html"))
+	temp := template.Must(template.ParseFiles("index.html"))
 	err := temp.Execute(w, Blogposts)
 	Checkerror(err)
 }
 func EditBlog(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
 	id := chi.URLParam(r, "Id")
 	for i, _ := range Blogposts {
 		if id == Blogposts[i].Id {
 			data = Blogposts[i]
-			temp := template.Must(template.ParseFiles("edit.html"))
-			err := temp.Execute(w, data)
-			Checkerror(err)
-			Blogposts = append(Blogposts[:i], Blogposts[i+1:]...)
+			//Blogposts = append(Blogposts[:i], Blogposts[i+1:]...)
 		}
 	}
 
+	temp := template.Must(template.ParseFiles("edit.html"))
+	err := temp.Execute(w, data)
+	Checkerror(err)
+
 }
+
+func PostEdit(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	id := chi.URLParam(r, "Id")
+	title := r.PostForm.Get("title")
+	content := r.PostForm.Get("content")
+
+	for i, _ := range Blogposts {
+		if id == Blogposts[i].Id {
+			Blogposts[i].Title = title
+			Blogposts[i].Content = content
+		}
+	}
+
+	http.Redirect(w, r, "/", 302)
+}
+
 func DeleteBlog(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "Id")
 	log.Println("checking Id gotten first", id)
@@ -69,6 +89,7 @@ func DeleteBlog(w http.ResponseWriter, r *http.Request) {
 	}
 	http.Redirect(w, r, "/", 302)
 }
+
 func PostBlog(w http.ResponseWriter, r *http.Request) {
 	InputAuthor := r.FormValue("author")
 	InputTitle := r.FormValue("title")
@@ -90,7 +111,9 @@ func PostBlog(w http.ResponseWriter, r *http.Request) {
 		date,
 	}
 	Blogposts = append(Blogposts, data)
-	temp := template.Must(template.ParseFiles("homepage.html"))
-	err := temp.Execute(w, Blogposts)
-	Checkerror(err)
+	//temp := template.Must(template.ParseFiles("homepage.html"))
+	//err := temp.Execute(w, Blogposts)
+	//Checkerror(err)
+
+	http.Redirect(w, r, "/", 302)
 }
