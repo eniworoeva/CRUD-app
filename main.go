@@ -1,8 +1,10 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/go-chi/chi/v5"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 	"log"
 	"net/http"
@@ -10,12 +12,15 @@ import (
 	"time"
 )
 
+var DB *sql.DB
+
 func Checkerror(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 func main() {
+	openDB()
 	router := chi.NewRouter()
 	router.Get("/", HomePage)
 	router.Post("/post", PostBlog)
@@ -38,10 +43,34 @@ type Blog struct {
 var Blogposts []Blog
 var data Blog
 
+func openDB() {
+	db, err := sql.Open("mysql", "root:houseno6@tcp(127.0.0.1:3306)/orevaDB")
+	if err != nil {
+		fmt.Println(err)
+	}
+	log.Println("connected to database")
+	DB = db
+	//create table here
+}
+
 func HomePage(w http.ResponseWriter, request *http.Request) {
+
+	//field := "SELECT * FROM blog"
+	ans, _ := DB.Query("SELECT * FROM blog")
+	//fmt.Println(ans)
+	defer ans.Close()
+
+	for ans.Next() {
+		var j Blog
+		ans.Scan(&j.Id, &j.Author, &j.Title, &j.Content, &j.Time, &j.Date)
+		Blogposts = append(Blogposts, j)
+	}
+
 	temp := template.Must(template.ParseFiles("index.html"))
 	err := temp.Execute(w, Blogposts)
 	Checkerror(err)
+
+	Blogposts = nil
 }
 func EditBlog(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
@@ -110,10 +139,8 @@ func PostBlog(w http.ResponseWriter, r *http.Request) {
 		time,
 		date,
 	}
-	Blogposts = append(Blogposts, data)
-	//temp := template.Must(template.ParseFiles("homepage.html"))
-	//err := temp.Execute(w, Blogposts)
-	//Checkerror(err)
+	DB.Query("INSERT INTO blog(id, Author, Title, Content, Time, Date) VALUES (?,?,?,?,?,?)", data.Id, data.Author, data.Title, data.Content, data.Time, data.Content)
 
+	//Blogposts = append(Blogposts, data)
 	http.Redirect(w, r, "/", 302)
 }
