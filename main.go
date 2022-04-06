@@ -75,15 +75,23 @@ func HomePage(w http.ResponseWriter, request *http.Request) {
 func EditBlog(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	id := chi.URLParam(r, "Id")
-	for i, _ := range Blogposts {
-		if id == Blogposts[i].Id {
-			data = Blogposts[i]
-			//Blogposts = append(Blogposts[:i], Blogposts[i+1:]...)
-		}
+	editValue, err := DB.Query("SELECT * FROM blog WHERE id=?", id)
+
+	blog := Blog{}
+	for editValue.Next() {
+		err := editValue.Scan(&blog.Id, &blog.Author, &blog.Title, &blog.Content, &blog.Time, &blog.Date)
+		Checkerror(err)
 	}
 
+	//for i, _ := range Blogposts {
+	//	if id == Blogposts[i].Id {
+	//		data = Blogposts[i]
+	//		//Blogposts = append(Blogposts[:i], Blogposts[i+1:]...)
+	//	}
+	//}
+
 	temp := template.Must(template.ParseFiles("edit.html"))
-	err := temp.Execute(w, data)
+	err = temp.Execute(w, blog)
 	Checkerror(err)
 
 }
@@ -91,32 +99,68 @@ func EditBlog(w http.ResponseWriter, r *http.Request) {
 func PostEdit(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	id := chi.URLParam(r, "Id")
-	title := r.PostForm.Get("title")
-	content := r.PostForm.Get("content")
+	//title := r.PostForm.Get("title")
+	//content := r.PostForm.Get("content")
 
-	for i, _ := range Blogposts {
-		if id == Blogposts[i].Id {
-			Blogposts[i].Title = title
-			Blogposts[i].Content = content
-		}
+	//for i, _ := range Blogposts {
+	//	if id == Blogposts[i].Id {
+	//		Blogposts[i].Title = title
+	//		Blogposts[i].Content = content
+	//	}
+	//}
+
+	//http.Redirect(w, r, "/", 302)
+
+	InputAuthor := r.FormValue("author")
+	InputTitle := r.FormValue("title")
+	InputContent := r.FormValue("content")
+
+	now := time.Now()
+	m := now.Month()
+	d := now.Day()
+	hrs := now.Hour()
+	min := now.Minute()
+	time := fmt.Sprintf("%v:%v", hrs, min)
+	date := fmt.Sprintf("%v %v", m, d)
+	data = Blog{
+		id,
+		InputAuthor,
+		InputTitle,
+		InputContent,
+		time,
+		date,
+	}
+	_, err := DB.Query("UPDATE blog SET Author=?, Title=?, Content=?, Time=?, Date=? WHERE id=?", data.Author, data.Title, data.Content, data.Time, data.Date, data.Id)
+	if err != nil {
+		log.Println(err)
+		return
 	}
 
+	//Blogposts = append(Blogposts, data)
 	http.Redirect(w, r, "/", 302)
+
 }
 
 func DeleteBlog(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "Id")
 	log.Println("checking Id gotten first", id)
 	fmt.Println(id)
-	for i, item := range Blogposts {
-		fmt.Println(item.Id)
-		if id == item.Id {
-			log.Println("checking Id gotten in the loop", id)
-			Blogposts = append(Blogposts[:i], Blogposts[i+1:]...)
-		}
-		log.Println("checking resultant Blogposts", Blogposts)
+	_, err := DB.Query("DELETE FROM blog WHERE id=?", id)
+	if err != nil {
+		log.Println(err)
+		return
 	}
+
+	//for i, item := range Blogposts {
+	//	fmt.Println(item.Id)
+	//	if id == item.Id {
+	//		log.Println("checking Id gotten in the loop", id)
+	//		Blogposts = append(Blogposts[:i], Blogposts[i+1:]...)
+	//	}
+	//	log.Println("checking resultant Blogposts", Blogposts)
+	//}
 	http.Redirect(w, r, "/", 302)
+
 }
 
 func PostBlog(w http.ResponseWriter, r *http.Request) {
