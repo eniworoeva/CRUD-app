@@ -23,6 +23,7 @@ func main() {
 	openDB()
 	router := chi.NewRouter()
 	router.Get("/", HomePage)
+	//router.Get("/", HomePage)
 	router.Post("/post", PostBlog)
 	router.Get("/delete/{Id}", DeleteBlog)
 	router.Get("/edit/{Id}", EditBlog)
@@ -50,7 +51,7 @@ func openDB() {
 	}
 	log.Println("connected to database")
 	DB = db
-	//create table here
+
 }
 
 func HomePage(w http.ResponseWriter, request *http.Request) {
@@ -72,6 +73,34 @@ func HomePage(w http.ResponseWriter, request *http.Request) {
 
 	Blogposts = nil
 }
+
+func PostBlog(w http.ResponseWriter, r *http.Request) {
+	InputAuthor := r.FormValue("author")
+	InputTitle := r.FormValue("title")
+	InputContent := r.FormValue("content")
+
+	now := time.Now()
+	m := now.Month()
+	d := now.Day()
+	y := now.Year()
+	hrs := now.Hour()
+	min := now.Minute()
+	time := fmt.Sprintf("%v:%v	", hrs, min)
+	date := fmt.Sprintf("%v %v, %v", m, d, y)
+	data = Blog{
+		uuid.NewString(),
+		InputAuthor,
+		InputTitle,
+		InputContent,
+		time,
+		date,
+	}
+	DB.Query("INSERT INTO blog(id, Author, Title, Content, Time, Date) VALUES (?,?,?,?,?,?)", data.Id, data.Author, data.Title, data.Content, data.Time, data.Date)
+
+	//Blogposts = append(Blogposts, data)
+	http.Redirect(w, r, "/", 302)
+}
+
 func EditBlog(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	id := chi.URLParam(r, "Id")
@@ -82,13 +111,7 @@ func EditBlog(w http.ResponseWriter, r *http.Request) {
 		err := editValue.Scan(&blog.Id, &blog.Author, &blog.Title, &blog.Content, &blog.Time, &blog.Date)
 		Checkerror(err)
 	}
-
-	//for i, _ := range Blogposts {
-	//	if id == Blogposts[i].Id {
-	//		data = Blogposts[i]
-	//		//Blogposts = append(Blogposts[:i], Blogposts[i+1:]...)
-	//	}
-	//}
+	log.Println(blog)
 
 	temp := template.Must(template.ParseFiles("edit.html"))
 	err = temp.Execute(w, blog)
@@ -99,17 +122,6 @@ func EditBlog(w http.ResponseWriter, r *http.Request) {
 func PostEdit(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	id := chi.URLParam(r, "Id")
-	//title := r.PostForm.Get("title")
-	//content := r.PostForm.Get("content")
-
-	//for i, _ := range Blogposts {
-	//	if id == Blogposts[i].Id {
-	//		Blogposts[i].Title = title
-	//		Blogposts[i].Content = content
-	//	}
-	//}
-
-	//http.Redirect(w, r, "/", 302)
 
 	InputAuthor := r.FormValue("author")
 	InputTitle := r.FormValue("title")
@@ -136,7 +148,6 @@ func PostEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//Blogposts = append(Blogposts, data)
 	http.Redirect(w, r, "/", 302)
 
 }
@@ -151,40 +162,6 @@ func DeleteBlog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//for i, item := range Blogposts {
-	//	fmt.Println(item.Id)
-	//	if id == item.Id {
-	//		log.Println("checking Id gotten in the loop", id)
-	//		Blogposts = append(Blogposts[:i], Blogposts[i+1:]...)
-	//	}
-	//	log.Println("checking resultant Blogposts", Blogposts)
-	//}
 	http.Redirect(w, r, "/", 302)
 
-}
-
-func PostBlog(w http.ResponseWriter, r *http.Request) {
-	InputAuthor := r.FormValue("author")
-	InputTitle := r.FormValue("title")
-	InputContent := r.FormValue("content")
-
-	now := time.Now()
-	m := now.Month()
-	d := now.Day()
-	hrs := now.Hour()
-	min := now.Minute()
-	time := fmt.Sprintf("%v:%v", hrs, min)
-	date := fmt.Sprintf("%v %v", m, d)
-	data = Blog{
-		uuid.NewString(),
-		InputAuthor,
-		InputTitle,
-		InputContent,
-		time,
-		date,
-	}
-	DB.Query("INSERT INTO blog(id, Author, Title, Content, Time, Date) VALUES (?,?,?,?,?,?)", data.Id, data.Author, data.Title, data.Content, data.Time, data.Content)
-
-	//Blogposts = append(Blogposts, data)
-	http.Redirect(w, r, "/", 302)
 }
